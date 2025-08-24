@@ -32,13 +32,13 @@ const AnimatedHeader: React.FC = () => {
       ]
     },
     {
-      label: "More",
+      label: "Contact",
       bgColor: "#3a3a3a", 
       textColor: "#fff",
       links: [
-        { label: "Admin Panel", href: "/admin", ariaLabel: "Admin dashboard" },
-        { label: "Order History", href: "/admin/orders", ariaLabel: "View orders" },
-        { label: "Support", href: "#", ariaLabel: "Contact support" }
+        { label: "Facebook", href: "https://facebook.com", ariaLabel: "Visit our Facebook page" },
+        { label: "Instagram", href: "https://instagram.com", ariaLabel: "Follow us on Instagram" },
+        { label: "Telegram", href: "https://t.me", ariaLabel: "Contact us on Telegram" }
       ]
     }
   ];
@@ -50,8 +50,9 @@ const AnimatedHeader: React.FC = () => {
   return (
     <div className="relative">
       <CardNav
-        logo="/logo.svg"
+        logo="/images/logo_black.png"
         logoAlt="E-Shop Logo"
+        logoSize="w-40"
         items={navItems}
         baseColor="#ffffff"
         menuColor="#000000"

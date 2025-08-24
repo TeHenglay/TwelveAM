@@ -3,6 +3,24 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { GoArrowUpRight } from "react-icons/go";
+import { HiShoppingCart, HiShoppingBag } from "react-icons/hi";
+import { useCart } from "@/app/store/useCart";
+
+// Utility function to adjust color brightness
+const adjustColor = (color: string, amount: number) => {
+  const cleanHex = color.replace('#', '');
+  const num = parseInt(cleanHex, 16);
+
+  let r = (num >> 16) + amount;
+  let g = ((num >> 8) & 0x00ff) + amount;
+  let b = (num & 0x0000ff) + amount;
+
+  r = Math.min(Math.max(0, r), 255);
+  g = Math.min(Math.max(0, g), 255);
+  b = Math.min(Math.max(0, b), 255);
+
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+};
 
 type CardNavLink = {
   label: string;
@@ -20,6 +38,7 @@ export type CardNavItem = {
 export interface CardNavProps {
   logo: string;
   logoAlt?: string;
+  logoSize?: string;
   items: CardNavItem[];
   className?: string;
   ease?: string;
@@ -44,9 +63,39 @@ const CardNav: React.FC<CardNavProps> = ({
 }) => {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
   const navRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement[]>([]);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
+
+  const cartItemCount = useCart((state) => state.getTotalItems());
+  const cartBadgeRef = useRef<HTMLSpanElement | null>(null);
+  const prevCountRef = useRef<number>(0);
+
+  // Animate the red cart badge when count changes
+  useLayoutEffect(() => {
+    const badge = cartBadgeRef.current;
+    if (!badge) return;
+
+    const prev = prevCountRef.current;
+    const curr = cartItemCount;
+
+    if (curr > 0 && curr !== prev) {
+      gsap.fromTo(
+        badge,
+        { scale: 0.2, y: -6, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.35, ease: "back.out(1.8)" }
+      );
+      gsap.to(badge, {
+        keyframes: [{ rotate: 8 }, { rotate: -8 }, { rotate: 0 }],
+        duration: 0.25,
+        delay: 0.1,
+        ease: "power2.out",
+      });
+    }
+
+    prevCountRef.current = curr;
+  }, [cartItemCount]);
 
   const calculateHeight = () => {
     const navEl = navRef.current;
@@ -66,6 +115,7 @@ const CardNav: React.FC<CardNavProps> = ({
         contentEl.style.position = "static";
         contentEl.style.height = "auto";
 
+        // force reflow
         contentEl.offsetHeight;
 
         const topBar = 60;
@@ -164,14 +214,17 @@ const CardNav: React.FC<CardNavProps> = ({
 
   return (
     <div
-      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99] top-[1.2em] md:top-[2em] ${className}`}
+      // changed to fixed so it stays sticky on top
+      className={`card-nav-container fixed left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99] top-[0.8rem] md:top-[1.2rem] ${className}`}
     >
       <nav
         ref={navRef}
         className={`card-nav ${isExpanded ? "open" : ""} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
         style={{ backgroundColor: baseColor }}
       >
+        {/* Top bar */}
         <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
+          {/* Hamburger */}
           <div
             className={`hamburger-menu ${isHamburgerOpen ? "open" : ""} group white h-full flex flex-col items-center justify-center cursor-pointer gap-[6px] order-2 md:order-none`}
             onClick={toggleMenu}
@@ -192,50 +245,74 @@ const CardNav: React.FC<CardNavProps> = ({
             />
           </div>
 
+          {/* Logo */}
           <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
-            <img src={logo} alt={logoAlt} className="logo h-[28px]" />
+            <a href="/" className="transition-opacity hover:opacity-90">
+              <img src={logo} alt={logoAlt} className="logo h-[36px]" />
+            </a>
           </div>
 
-          <button
-            type="button"
-            onClick={onGetStartedClick}
-            className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 py-2 h-full font-medium cursor-pointer transition-colors duration-300"
-            style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-          >
-           Products
-          </button>
+          {/* Actions */}
+          <div className="flex items-center gap-4 mr-4">
+            <button
+              type="button"
+              onClick={onGetStartedClick}
+              className="hidden md:flex items-center justify-center hover:opacity-75 transition-opacity"
+              style={{ color: menuColor || "#000" }}
+              aria-label="Products"
+            >
+              <HiShoppingBag size={30} />
+            </button>
+
+            <a
+              href="/cart"
+              className="hidden md:flex items-center justify-center hover:opacity-75 transition-opacity relative"
+              style={{ color: menuColor || "#000" }}
+              aria-label={`Shopping Cart${cartItemCount > 0 ? ` (${cartItemCount} items)` : ''}`}
+            >
+              <HiShoppingCart size={30} />
+              {cartItemCount > 0 && (
+                <span
+                  ref={cartBadgeRef}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center leading-none shadow-md"
+                >
+                  {cartItemCount}
+                </span>
+              )}
+            </a>
+          </div>
         </div>
 
+        {/* Expandable content */}
         <div
           className={`card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 flex flex-col items-stretch gap-2 justify-start z-[1] ${
-            isExpanded
-              ? "visible pointer-events-auto"
-              : "invisible pointer-events-none"
+            isExpanded ? "visible pointer-events-auto" : "invisible pointer-events-none"
           } md:flex-row md:items-end md:gap-[12px]`}
           aria-hidden={!isExpanded}
         >
           {(items || []).slice(0, 3).map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}
-              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[calc(0.75rem-0.2rem)] min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%]"
+              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[calc(0.75rem-0.2rem)] min-w-0 flex-[1_1_auto] h-auto min-h=[60px] md:h-full md:min-h-0 md:flex-[1_1_0%] shadow-lg backdrop-blur-sm border border-white/10 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl hover:border-white/20"
               ref={setCardRef(idx)}
-              style={{ backgroundColor: item.bgColor, color: item.textColor }}
+              style={{
+                background: `linear-gradient(145deg, ${item.bgColor}, ${adjustColor(item.bgColor, -15)})`,
+                color: item.textColor,
+                boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+              }}
             >
-              <div className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px]">
+              <div className="nav-card-label font-sans font-medium tracking-[-0.5px] text-[18px] md:text-[22px]">
                 {item.label}
               </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
                 {item.links?.map((lnk, i) => (
                   <a
                     key={`${lnk.label}-${i}`}
-                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
+                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px] font-sans"
                     href={lnk.href}
                     aria-label={lnk.ariaLabel}
                   >
-                    <GoArrowUpRight
-                      className="nav-card-link-icon shrink-0"
-                      aria-hidden="true"
-                    />
+                    <GoArrowUpRight className="nav-card-link-icon shrink-0" aria-hidden="true" />
                     {lnk.label}
                   </a>
                 ))}
