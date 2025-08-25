@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { prisma } from '@/app/lib/db';
+import prisma from '@/app/lib/db';
 import AddToCartButton from './components/AddToCartButton';
 import ProductUpdateNotification from '@/app/components/ProductUpdateNotification';
 

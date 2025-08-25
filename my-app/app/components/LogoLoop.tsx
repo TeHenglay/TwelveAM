@@ -31,7 +31,11 @@ export interface LogoLoopProps {
   speed?: number;
   direction?: "left" | "right";
   width?: number | string;
+  /** Band height; logos are vertically centered inside this row */
+  height?: number | string;
   logoHeight?: number;
+  /** Additional vertical offset for logos (px). Positive moves logos down. */
+  logoOffset?: number;
   gap?: number;
   pauseOnHover?: boolean;
   fadeOut?: boolean;
@@ -53,6 +57,8 @@ const toCssLength = (value?: number | string): string | undefined =>
 
 const cx = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
+
+/* -------------------- Hooks -------------------- */
 
 const useResizeObserver = (
   callback: () => void,
@@ -98,18 +104,16 @@ const useImageLoader = (
     let remainingImages = images.length;
     const handleImageLoad = () => {
       remainingImages -= 1;
-      if (remainingImages === 0) {
-        onLoad();
-      }
+      if (remainingImages === 0) onLoad();
     };
 
     images.forEach((img) => {
-      const htmlImg = img as HTMLImageElement;
-      if (htmlImg.complete) {
+      const el = img as HTMLImageElement;
+      if (el.complete) {
         handleImageLoad();
       } else {
-        htmlImg.addEventListener("load", handleImageLoad, { once: true });
-        htmlImg.addEventListener("error", handleImageLoad, { once: true });
+        el.addEventListener("load", handleImageLoad, { once: true });
+        el.addEventListener("error", handleImageLoad, { once: true });
       }
     });
 
@@ -161,23 +165,18 @@ const useAnimationLoop = (
         lastTimestampRef.current = timestamp;
       }
 
-      const deltaTime =
-        Math.max(0, timestamp - lastTimestampRef.current) / 1000;
+      const dt = Math.max(0, timestamp - lastTimestampRef.current) / 1000;
       lastTimestampRef.current = timestamp;
 
       const target = pauseOnHover && isHovered ? 0 : targetVelocity;
-
-      const easingFactor =
-        1 - Math.exp(-deltaTime / ANIMATION_CONFIG.SMOOTH_TAU);
-      velocityRef.current += (target - velocityRef.current) * easingFactor;
+      const easing = 1 - Math.exp(-dt / ANIMATION_CONFIG.SMOOTH_TAU);
+      velocityRef.current += (target - velocityRef.current) * easing;
 
       if (seqWidth > 0) {
-        let nextOffset = offsetRef.current + velocityRef.current * deltaTime;
+        let nextOffset = offsetRef.current + velocityRef.current * dt;
         nextOffset = ((nextOffset % seqWidth) + seqWidth) % seqWidth;
         offsetRef.current = nextOffset;
-
-        const translateX = -offsetRef.current;
-        track.style.transform = `translate3d(${translateX}px, 0, 0)`;
+        track.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
       }
 
       rafRef.current = requestAnimationFrame(animate);
@@ -186,14 +185,14 @@ const useAnimationLoop = (
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
       lastTimestampRef.current = null;
     };
   }, [targetVelocity, seqWidth, isHovered, pauseOnHover]);
 };
+
+/* -------------------- Component -------------------- */
 
 export const LogoLoop = React.memo<LogoLoopProps>(
   ({
@@ -201,7 +200,9 @@ export const LogoLoop = React.memo<LogoLoopProps>(
     speed = 120,
     direction = "left",
     width = "100%",
+    height = 80, // band height for vertical centering
     logoHeight = 28,
+    logoOffset = 0,
     gap = 32,
     pauseOnHover = true,
     fadeOut = false,
@@ -223,9 +224,9 @@ export const LogoLoop = React.memo<LogoLoopProps>(
 
     const targetVelocity = useMemo(() => {
       const magnitude = Math.abs(speed);
-      const directionMultiplier = direction === "left" ? 1 : -1;
-      const speedMultiplier = speed < 0 ? -1 : 1;
-      return magnitude * directionMultiplier * speedMultiplier;
+      const dir = direction === "left" ? 1 : -1;
+      const sign = speed < 0 ? -1 : 1;
+      return magnitude * dir * sign;
     }, [speed, direction]);
 
     const updateDimensions = useCallback(() => {
@@ -247,7 +248,6 @@ export const LogoLoop = React.memo<LogoLoopProps>(
       [containerRef, seqRef],
       [logos, gap, logoHeight]
     );
-
     useImageLoader(seqRef, updateDimensions, [logos, gap, logoHeight]);
 
     useAnimationLoop(
@@ -258,7 +258,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
       pauseOnHover
     );
 
-    const cssVariables = useMemo(
+    const cssVars = useMemo(
       () =>
         ({
           "--logoloop-gap": `${gap}px`,
@@ -271,15 +271,15 @@ export const LogoLoop = React.memo<LogoLoopProps>(
     const rootClasses = useMemo(
       () =>
         cx(
-          "relative overflow-x-hidden group",
+          // flex + items-center keeps the track vertically centered in the band
+          "relative overflow-x-hidden group mt-3",
           "[--logoloop-gap:32px]",
-          "[--logoloop-logoHeight:28px]",
+          "[--logoloop-logoHeight:34px]",
           "[--logoloop-fadeColorAuto:#ffffff]",
           "dark:[--logoloop-fadeColorAuto:#0b0b0b]",
-          scaleOnHover && "py-[calc(var(--logoloop-logoHeight)*0.1)]",
           className
         ),
-      [scaleOnHover, className]
+      [className]
     );
 
     const handleMouseEnter = useCallback(() => {
@@ -297,10 +297,10 @@ export const LogoLoop = React.memo<LogoLoopProps>(
         const content = isNodeItem ? (
           <span
             className={cx(
-              "inline-flex items-center",
+              "inline-flex items-center justify-center",
               "motion-reduce:transition-none",
               scaleOnHover &&
-                "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-120"
+                "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-110"
             )}
             aria-hidden={!!(item as any).href && !(item as any).ariaLabel}
           >
@@ -314,7 +314,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
               "[image-rendering:-webkit-optimize-contrast]",
               "motion-reduce:transition-none",
               scaleOnHover &&
-                "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-120"
+                "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-110"
             )}
             src={(item as any).src}
             srcSet={(item as any).srcSet}
@@ -336,9 +336,8 @@ export const LogoLoop = React.memo<LogoLoopProps>(
         const inner = (item as any).href ? (
           <a
             className={cx(
-              "inline-flex items-center no-underline rounded",
-              "transition-opacity duration-200 ease-linear",
-              "hover:opacity-80",
+              "inline-flex items-center justify-center no-underline rounded",
+              "transition-opacity duration-200 ease-linear hover:opacity-80",
               "focus-visible:outline focus-visible:outline-current focus-visible:outline-offset-2"
             )}
             href={(item as any).href}
@@ -356,23 +355,27 @@ export const LogoLoop = React.memo<LogoLoopProps>(
           <li
             className={cx(
               "flex-none mr-[var(--logoloop-gap)] text-[length:var(--logoloop-logoHeight)] leading-[1]",
+              "flex items-center",
+              "mt-4", // base margin-top for all logos
               scaleOnHover && "overflow-visible group/item"
             )}
             key={key}
             role="listitem"
+            // If you pass logoOffset, it will override the mt-4 (inline style wins)
+            style={{ marginTop: toCssLength(logoOffset) }}
           >
             {inner}
           </li>
         );
       },
-      [scaleOnHover]
+      [scaleOnHover, logoOffset]
     );
 
     const logoLists = useMemo(
       () =>
         Array.from({ length: copyCount }, (_, copyIndex) => (
           <ul
-            className="flex items-center"
+            className="flex items-center flex-nowrap" // prevent wrapping within each sequence copy
             key={`copy-${copyIndex}`}
             role="list"
             aria-hidden={copyIndex > 0}
@@ -389,10 +392,11 @@ export const LogoLoop = React.memo<LogoLoopProps>(
     const containerStyle = useMemo(
       (): React.CSSProperties => ({
         width: toCssLength(width) ?? "100%",
-        ...cssVariables,
+        height: toCssLength(height) ?? "80px",
+        ...cssVars,
         ...style,
       }),
-      [width, cssVariables, style]
+      [width, height, cssVars, style]
     );
 
     return (
@@ -427,11 +431,11 @@ export const LogoLoop = React.memo<LogoLoopProps>(
         )}
 
         <div
+          ref={trackRef}
           className={cx(
-            "flex w-max will-change-transform select-none",
+            "flex w-max will-change-transform select-none items-center whitespace-nowrap",
             "motion-reduce:transform-none"
           )}
-          ref={trackRef}
         >
           {logoLists}
         </div>

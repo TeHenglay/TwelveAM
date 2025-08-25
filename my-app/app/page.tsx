@@ -3,6 +3,7 @@
 import { Hero } from '@/app/components';
 import LogoLoop from '@/app/components/LogoLoop';
 import NewArrivals from '@/app/components/NewArrivals';
+import ProductSection from '@/app/components/ProductSection';
 const brandLogos = [
   { src: "/images/logo.png", alt: "Twelve AM Logo", title: "Twelve AM" },
   { src: "/images/Logo1.png", alt: "Twelve AM Logo 1", title: "Twelve AM" },
@@ -21,6 +22,7 @@ export default function HomePage() {
           direction="left"
           logoHeight={40}
           gap={80}
+          logoOffset={8}
           pauseOnHover
           scaleOnHover
           fadeOut
@@ -29,6 +31,7 @@ export default function HomePage() {
         />
       </div>
       <NewArrivals />
+      <ProductSection />
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db';
+import prisma from '@/app/lib/db';
 import { getCachedData, cacheData, invalidateCache, CACHE_KEYS } from '@/app/lib/redis';
 
 export async function GET(request: NextRequest) {

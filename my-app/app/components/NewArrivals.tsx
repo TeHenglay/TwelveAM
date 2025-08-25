@@ -84,10 +84,11 @@ export default function NewArrivals() {
   }, [currentIndex]);
 
   return (
-    <section className="py-16 bg-white select-none">
-      <h2 className="text-3xl font-bold text-center mb-12">New Arrivals</h2>
-
-      <div className="relative mx-auto max-w-[1200px] px-4">
+    // Full-bleed section: background spans viewport, content is centered
+    <section className="relative w-full py-16 select-none bg-white">
+      {/* Centered content wrapper */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">New Arrivals</h2>
         {/* Arrow buttons */}
         <button
           onClick={prev}
@@ -166,4 +167,3 @@ export default function NewArrivals() {
     </section>
   );
 }
-

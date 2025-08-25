@@ -14,8 +14,8 @@ export default function ClientLayout({
       {/* Animated Header with GSAP */}
       <AnimatedHeader />
       
-      {/* Main content with proper spacing for fixed nav */}
-      <main className="flex-1 container mx-auto px-2 pt-20">{children}</main>
+  {/* Main content: allow sections to decide full-bleed vs centered */}
+  <main className="flex-1 w-full px-2 pt-20">{children}</main>
       
       <Footer />
       <MobileNav />

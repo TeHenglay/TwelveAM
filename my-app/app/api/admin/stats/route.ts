@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db';
+import prisma from '@/app/lib/db';
 
 export async function GET(request: Request) {
   try {
@@ -16,18 +16,17 @@ export async function GET(request: Request) {
       where: { stock: { lt: 5 } }
     }).catch(() => 0);
 
-    // Calculate total customers (distinct user IDs from orders)
+    // Calculate total customers (distinct customers from orders)
     const totalCustomers = await prisma.order.groupBy({
-      by: ['userId'],
-      where: { userId: { not: null } }
+      by: ['customerEmail'],
+      where: { customerEmail: { not: null } }
     }).then(users => users.length).catch(() => 0);
 
     // Calculate total revenue from completed orders
     const orders = await prisma.order.findMany({
       where: {
         OR: [
-          { status: 'COMPLETED' },
-          { status: 'DELIVERED' }
+          { status: 'APPROVED' }
         ]
       },
       select: { total: true }

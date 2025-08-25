@@ -3,88 +3,111 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
-const Hero = () => {
+/**
+ * Redesign notes:
+ * - Make background full-bleed (spans the entire viewport width) even when
+ *   the site layout uses centered containers.
+ * - Keep content centered with a max width for readability.
+ * - Add a split layout on large screens: hero text + small product card.
+ */
+
+const Hero: React.FC = () => {
   return (
-    <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-black">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+    <section className="relative w-full">
+      {/* Full-bleed background that always covers viewport width */}
+      <div
+        aria-hidden
+        className="absolute left-1/2 right-1/2 -translate-x-1/2 w-screen inset-0 z-0"
         style={{
           backgroundImage: 'url("/images/hero-bg.jpg")',
-          filter: 'brightness(0.6)'
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
-      />
-
-      {/* Content Container */}
-      <div className="relative z-10 container mx-auto px-4 text-center text-white">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-6"
-        >
-          {/* Main Heading */}
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-            Discover Your Style
-            <br />
-            <span className="text-yellow-400">Elevate Your Wardrobe</span>
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto">
-            Explore our curated collection of premium streetwear and fashion essentials
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <Link 
-              href="/products" 
-              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-yellow-400 transition-colors duration-300 text-lg"
-            >
-              Shop Now
-            </Link>
-            <Link 
-              href="/products?new=true" 
-              className="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition-colors duration-300 text-lg"
-            >
-              New Arrivals
-            </Link>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-center"
-            >
-              <h3 className="text-xl font-semibold mb-2">Premium Quality</h3>
-              <p className="text-gray-300">Carefully selected materials and craftsmanship</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="text-center"
-            >
-              <h3 className="text-xl font-semibold mb-2">Express Delivery</h3>
-              <p className="text-gray-300">Fast and reliable shipping nationwide</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="text-center"
-            >
-              <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
-              <p className="text-gray-300">Always here to help with your needs</p>
-            </motion.div>
-          </div>
-        </motion.div>
+      >
+        <div className="absolute inset-0 bg-black/60" />
       </div>
-    </div>
+
+      {/* Content wrapper: centered with readable width */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-20 lg:py-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left: Headline + CTAs */}
+          <div className="lg:col-span-7 text-center lg:text-left">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-white"
+            >
+              Discover Your Style
+              <br />
+              <span className="text-yellow-400">Elevate Your Wardrobe</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="mt-6 text-lg sm:text-xl text-gray-200 max-w-2xl mx-auto lg:mx-0"
+            >
+              Explore our curated collection of premium streetwear and fashion essentials —
+              crafted for comfort, built to last.
+            </motion.p>
+
+            <div className="mt-8 flex flex-col sm:flex-row sm:justify-start justify-center gap-4">
+              <Link
+                href="/products"
+                className="inline-flex items-center justify-center px-8 py-3 bg-yellow-400 text-black font-semibold rounded-full shadow-sm hover:brightness-95 transition"
+              >
+                Shop Now
+              </Link>
+
+              <Link
+                href="/products?new=true"
+                className="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition"
+              >
+                New Arrivals
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: small product highlight card on large screens */}
+          <div className="hidden lg:col-span-5 lg:flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15, duration: 0.6 }}
+              className="relative w-80 bg-white/5 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/10"
+            >
+              <div className="relative h-56 w-full rounded-md overflow-hidden">
+                <Image
+                  src="/images/hero-product.jpg"
+                  alt="Featured product"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                />
+              </div>
+
+              <div className="mt-4 text-left text-white">
+                <h4 className="text-lg font-semibold">Featured: Midnight Jacket</h4>
+                <p className="text-sm text-gray-300">Limited drop · Premium materials</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="text-xl font-bold">$129.00</span>
+                  <Link
+                    href="/products/midnight-jacket"
+                    className="ml-auto text-sm bg-yellow-400 text-black px-3 py-1 rounded-full font-medium"
+                  >
+                    View
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

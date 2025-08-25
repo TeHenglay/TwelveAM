@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db';
+import prisma from '@/app/lib/db';
 // Authentication removed - admin access is open
 import { createCollectionSchema, validateBody, validationErrorResponse } from '@/app/lib/validations';
 

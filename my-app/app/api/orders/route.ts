@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/db';
+import prisma from '@/app/lib/db';
 import { checkPurchaseLimit, recordPurchase, getClientIP } from '@/app/lib/purchaseLimit';
 import { sendOrderNotification, type OrderNotificationData } from '@/app/lib/telegram';
 
